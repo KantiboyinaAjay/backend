@@ -7,20 +7,28 @@ const mongoose = require("mongoose");
 const BodyParser = require("body-parser");
 var nodemailer = require("nodemailer");
 
+const http = require("http");
+// const SocketId = require("socket.io");
+
 const cors = require("cors");
 var indexRouter = require("./routes/index");
 var usersRouter = require("./routes/users");
 var { Questions_Table } = require("./bin/models");
+// const { Socket } = require("socket.io-client");
 var app = express();
 
+app.use(cors());
 
-app.use(cors(
-  {
-    origin: ["https://deploy-mern-1whq.vercel.app"],
-    method: ["POST","GET"],
-    credentials:true
-  }
-));
+const server = http.createServer(app);
+
+const io = SocketId(server, {
+  cors: {
+    origin: "*",
+    methods: ["GET", "POST"],
+    credentials: true,
+  },
+})
+
 //mongodb connection
 mongoose.connect(
   "mongodb+srv://ajaykantiboyina:Ajay1441@cluster0.vleuyp5.mongodb.net/",
@@ -58,7 +66,7 @@ app.get("/get_codesheet", function (req, res) {
 });
 
 app.post("/post_problem", function (req, res) {
-  console.log(res);
+  // console.log(res);
   const newProblem = new Questions_Table({
     title: req.body.title,
     description: req.body.description,
@@ -74,6 +82,7 @@ app.post("/post_problem", function (req, res) {
     .save()
     .then((data) => {
       res.status(201).send(data);
+      // io.emit("newPost", data)
     })
     .catch((err) => {
       if (err.code === 11000) {
@@ -122,7 +131,14 @@ app.use(function (err, req, res, next) {
   res.render("error");
 });
 
-app.listen(8000, function () {
+// io.on("connection", (socket) => {
+//   console.log("A user connected");
+//   socket.on("disconnect", () => {
+//   console.log("User disconnected");
+//   });
+// });
+
+server.listen(8000, function () {
   console.log("server started");
 });
 
